@@ -10,7 +10,7 @@ jobs:
     steps:
       - uses: actions/github-script@v6
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.PROJECT_TOKEN }}
           script: |
             const projectId = '${{ secrets.PROJECT_ID }}';
             const statusFieldId = '${{ secrets.STATUS_FIELD_ID }}';
