@@ -1,0 +1,88 @@
+name: Update Project Status for PRs and Issues
+
+on:
+  pull_request:
+    types: [opened, ready_for_review]
+
+jobs:
+  update_project:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const projectId = '${{ secrets.PROJECT_ID }}';
+            const statusFieldId = '${{ secrets.STATUS_FIELD_ID }}';
+            const inReviewStatusId = '${{ secrets.IN_REVIEW_OPTION_ID }}';
+            
+            // 1. PR을 In Review로 설정
+            try {
+              await github.graphql(`
+                mutation {
+                  updateProjectV2ItemFieldValue(
+                    input: {
+                      projectId: "${projectId}"
+                      itemId: "${context.payload.pull_request.node_id}"
+                      fieldId: "${statusFieldId}" 
+                      value: { 
+                        singleSelectOptionId: "${inReviewStatusId}"
+                      }
+                    }
+                  ) {
+                    projectV2Item {
+                      id
+                    }
+                  }
+                }
+              `);
+              console.log('Pull request status updated to In Review');
+            } catch (error) {
+              console.log('Error updating PR status:', error);
+            }
+            
+            // 2. PR 본문에서 참조된 이슈 찾기
+            const body = context.payload.pull_request.body || '';
+            const issueMatches = body.match(/(close|closes|closed|fix|fixes|fixed|resolve|resolves|resolved)\s+#(\d+)/gi);
+            
+            if (issueMatches) {
+              for (const match of issueMatches) {
+                const issueNumber = match.match(/#(\d+)/)[1];
+                
+                try {
+                  // 이슈 정보 가져오기
+                  const issue = await github.rest.issues.get({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    issue_number: parseInt(issueNumber)
+                  });
+                  
+                  // 이슈 상태 변경
+                  if (issue.data.node_id) {
+                    await github.graphql(`
+                      mutation {
+                        updateProjectV2ItemFieldValue(
+                          input: {
+                            projectId: "${projectId}"
+                            itemId: "${issue.data.node_id}"
+                            fieldId: "${statusFieldId}"
+                            value: {
+                              singleSelectOptionId: "${inReviewStatusId}"
+                            }
+                          }
+                        ) {
+                          projectV2Item {
+                            id
+                          }
+                        }
+                      }
+                    `);
+                    console.log(`Issue #${issueNumber} status updated to In Review`);
+                  }
+                } catch (error) {
+                  console.log(`Error updating issue #${issueNumber}:`, error);
+                }
+              }
+            } else {
+              console.log('No linked issues found in PR body');
+            }
