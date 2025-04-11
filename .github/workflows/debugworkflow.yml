@@ -1,0 +1,71 @@
+name: Debug Workflow
+
+on:
+  workflow_dispatch:
+    inputs:
+      debug_level:
+        description: '디버깅 레벨 설정'
+        required: true
+        default: 'info'
+        type: choice
+        options:
+          - info
+          - debug
+          - verbose
+
+jobs:
+  debug:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Enable debug logging
+        if: inputs.debug_level == 'debug' || inputs.debug_level == 'verbose'
+        run: echo "ACTIONS_STEP_DEBUG=true" >> $GITHUB_ENV
+      
+      - name: Print environment variables
+        run: |
+          echo "현재 환경 변수 출력:"
+          env | sort
+      
+      - name: Debug project configuration
+        run: |
+          echo "프로젝트 정보 조회 중..."
+          echo "리포지토리: ${{ github.repository }}"
+          echo "워크플로우: ${{ github.workflow }}"
+          echo "이벤트: ${{ github.event_name }}"
+      
+      - name: Debug project IDs
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.PROJECT_TOKEN }}
+          script: |
+            try {
+              // 프로젝트 정보 가져오기
+              const project = await github.graphql(`
+                query {
+                  user(login: "${{ github.repository_owner }}") {
+                    projectV2(number: 3) {
+                      id
+                      title
+                      fields(first: 20) {
+                        nodes {
+                          ... on ProjectV2SingleSelectField {
+                            id
+                            name
+                            options {
+                              id
+                              name
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              `);
+              console.log('Project info:', JSON.stringify(project, null, 2));
+            } catch (error) {
+              console.log('Error fetching project:', error);
+            }
