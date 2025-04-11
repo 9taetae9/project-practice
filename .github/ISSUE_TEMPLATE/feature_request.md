@@ -1,8 +1,8 @@
 ---
 name: 기능 구현
 about: API 구현 작업을 위한 템플릿
-title: '[구현] '
-labels: '기능구현'
+title: '[Feat]: '
+labels: 'feat'
 assignees: ''
 ---
 
