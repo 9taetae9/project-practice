@@ -6,7 +6,7 @@ body:
   - type: input
     id: branch_keyword
     attributes:
-      label: "브랜치 키워드"
+      label: "branch_keyword"
       description: "영문 소문자로 간결한 브랜치 명을 입력하세요 (예: employee, login-modal)"
     validations:
       required: true
