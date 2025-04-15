@@ -6,6 +6,10 @@ labels: 'refactor'
 assignees: ''
 ---
 
+## 브랜치 키워드
+<!-- 영문 소문자로 간결한 브랜치 명을 입력하세요 (예: employee, login-modal) -->
+branch_keyword: 
+
 ## 리펙토링 대상
 <!-- 어떤 기능을 리펙토링할지 간략하게 설명해주세요 -->
 
