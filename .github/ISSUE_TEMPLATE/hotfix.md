@@ -1,8 +1,8 @@
 ---
 name: 버그 수정
 about: 버그 수정 작업을 위한 템플릿
-title: '[Bug]: '
-labels: '버그'
+title: '[Hotfix]: '
+labels: 'hotfix'
 assignees: ''
 ---
 
