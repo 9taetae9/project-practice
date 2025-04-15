@@ -4,36 +4,46 @@ on:
   issues:
     types: [opened]
 
-permissions:
-  contents: write
-
 jobs:
   create-feature-branch:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - name: Extract branch keyword
+        id: extract_keyword
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const body = context.payload.issue.body;
+            const keywordMatch = body.match(/branch_keyword:\s*(.+)/);
+            const keyword = keywordMatch ? keywordMatch[1].trim() : null;
+            core.setOutput('keyword', keyword);
+
+      - name: Validate keyword
+        if: steps.extract_keyword.outputs.keyword == ''
+        run: |
+          echo "Branch keyword is required"
+          exit 1
 
       - name: Set branch prefix
         id: set_prefix
         run: |
           case "${{ join(github.event.issue.labels.*.name, ',') }}" in
-            *"feat"*)   echo "prefix=feature" >> $GITHUB_OUTPUT ;;
-            *"bug"*)    echo "prefix=bugfix" >> $GITHUB_OUTPUT ;;
-            *"hotfix"*) echo "prefix=hotfix" >> $GITHUB_OUTPUT ;;
+            *"feat"*)    echo "prefix=feature" >> $GITHUB_OUTPUT ;;
             *"refactor"*) echo "prefix=refactor" >> $GITHUB_OUTPUT ;;
-            *)          echo "prefix=task" >> $GITHUB_OUTPUT ;;
+            *"bug"*)     echo "prefix=bugfix" >> $GITHUB_OUTPUT ;;
+            *"hotfix"*)  echo "prefix=hotfix" >> $GITHUB_OUTPUT ;;
+            *)           echo "prefix=task" >> $GITHUB_OUTPUT ;;
           esac
 
       - name: Sanitize branch name
         id: sanitize
         run: |
-          CLEAN_TITLE=$(echo "${{ github.event.issue.title }}" | 
+          CLEAN_KEYWORD=$(echo "${{ steps.extract_keyword.outputs.keyword }}" | 
             iconv -f utf-8 -t ascii//TRANSLIT//IGNORE |
             tr -cd '[:alnum:]-_' |
             tr '[:upper:]' '[:lower:]' |
-            cut -c 1-63)
-          echo "name=${CLEAN_TITLE}" >> $GITHUB_OUTPUT
+            cut -c 1-20)
+          echo "name=$CLEAN_KEYWORD" >> $GITHUB_OUTPUT
 
       - name: Create branch
         uses: peterjgrainger/action-create-branch@v3.0.0
