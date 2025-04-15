@@ -30,7 +30,6 @@ jobs:
           case "${{ join(github.event.issue.labels.*.name, ',') }}" in
             *"feat"*)    echo "prefix=feature" >> $GITHUB_OUTPUT ;;
             *"refactor"*) echo "prefix=refactor" >> $GITHUB_OUTPUT ;;
-            *"bug"*)     echo "prefix=bugfix" >> $GITHUB_OUTPUT ;;
             *"hotfix"*)  echo "prefix=hotfix" >> $GITHUB_OUTPUT ;;
             *)           echo "prefix=task" >> $GITHUB_OUTPUT ;;
           esac
@@ -50,4 +49,4 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          branch: ${{ steps.set_prefix.outputs.prefix }}/#${{ github.event.issue.number }}-${{ steps.sanitize.outputs.name }}
+          branch: ${{ steps.set_prefix.outputs.prefix }}/#${{ github.event.issue.number }}/${{ steps.sanitize.outputs.name }}
