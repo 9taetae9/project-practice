@@ -58,4 +58,4 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          branch: ${{ steps.set_prefix.outputs.prefix }}/#${{ github.event.issue.number }}-${{ steps.sanitize.outputs.name }}
+          branch: ${{ steps.set_prefix.outputs.prefix }}/#${{ github.event.issue.number }}/${{ steps.sanitize.outputs.name }}
