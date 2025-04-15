@@ -31,18 +31,27 @@ jobs:
           echo "::error::브랜치 키워드가 입력되지 않았습니다."
           exit 1
 
-      - name: Set branch prefix
-        id: set_prefix
+      - name: Set branch metadata
+        id: set_metadata
         run: |
           LABELS=$(echo "${{ join(github.event.issue.labels.*.name, ',') }}" | tr '[:upper:]' '[:lower:]')
           case "${LABELS}" in
-            *feat*)     echo "prefix=feat" >> $GITHUB_OUTPUT ;;
-            *hotfix*)   echo "prefix=hotfix" >> $GITHUB_OUTPUT ;;
-            *refactor*) 
-            echo "prefix=feat" >> $GITHUB_OUTPUT 
-            echo "suffix=-refactor" >> $GITHUB_OUTPUT
-            ;;
-            *)          echo "prefix=task" >> $GITHUB_OUTPUT ;;
+            *feat*)
+              echo "prefix=feat" >> $GITHUB_OUTPUT
+              echo "suffix=" >> $GITHUB_OUTPUT
+              ;;
+            *refactor*)
+              echo "prefix=feat" >> $GITHUB_OUTPUT
+              echo "suffix=-refactor" >> $GITHUB_OUTPUT
+              ;;
+            *hotfix*)
+              echo "prefix=hotfix" >> $GITHUB_OUTPUT
+              echo "suffix=" >> $GITHUB_OUTPUT
+              ;;
+            *)
+              echo "prefix=task" >> $GITHUB_OUTPUT
+              echo "suffix=" >> $GITHUB_OUTPUT
+              ;;
           esac
 
       - name: Sanitize branch name
@@ -52,10 +61,10 @@ jobs:
             iconv -f utf-8 -t ascii//TRANSLIT//IGNORE |
             tr -cd '[:alnum:]-_' |
             tr '[:upper:]' '[:lower:]' |
-            cut -c 1-20)
+            cut -c 1-15)
+
           FINAL_NAME="${CLEAN_KEYWORD}${{ steps.set_metadata.outputs.suffix }}"
-          echo "::set-output name=final_name::$FINAL_NAME"
-          echo "name=$CLEAN_KEYWORD" >> $GITHUB_OUTPUT
+          echo "name=${FINAL_NAME}" >> $GITHUB_OUTPUT
 
       - name: Create branch
         uses: peterjgrainger/action-create-branch@v3.0.0
