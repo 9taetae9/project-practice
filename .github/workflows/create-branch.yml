@@ -21,8 +21,9 @@ jobs:
         with:
           script: |
             const body = context.payload.issue.body;
-            const keywordMatch = body.match(/### Branch Keyword\s*\n\*\*(.+?)\*\*\s*\n/);
-            core.setOutput('keyword', keywordMatch ? keywordMatch[1].trim() : null);
+            const keywordMatch = body.match(/### Branch Keyword\s*\n([^\n]+)/);
+            const keyword = keywordMatch ? keywordMatch[1].trim() : null;
+            core.setOutput('keyword', keyword);
 
       - name: Validate keyword
         if: steps.extract_keyword.outputs.keyword == null
