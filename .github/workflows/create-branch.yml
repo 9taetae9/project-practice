@@ -4,34 +4,42 @@ on:
   issues:
     types: [opened]
 
+permissions:
+  contents: write
+  issues: read
+
 jobs:
   create-feature-branch:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Extract branch keyword
         id: extract_keyword
         uses: actions/github-script@v6
         with:
           script: |
             const body = context.payload.issue.body;
-            const keywordMatch = body.match(/branch_keyword:\s*(.+)/);
-            const keyword = keywordMatch ? keywordMatch[1].trim() : null;
-            core.setOutput('keyword', keyword);
+            const keywordMatch = body.match(/### Branch Keyword\s*\n\*\*(.+?)\*\*\s*\n/);
+            core.setOutput('keyword', keywordMatch ? keywordMatch[1].trim() : null);
 
       - name: Validate keyword
-        if: steps.extract_keyword.outputs.keyword == ''
+        if: steps.extract_keyword.outputs.keyword == null
         run: |
-          echo "Branch keyword is required"
+          echo "::error::브랜치 키워드가 입력되지 않았습니다."
           exit 1
 
       - name: Set branch prefix
         id: set_prefix
         run: |
-          case "${{ join(github.event.issue.labels.*.name, ',') }}" in
-            *"feat"*)    echo "prefix=feature" >> $GITHUB_OUTPUT ;;
-            *"refactor"*) echo "prefix=refactor" >> $GITHUB_OUTPUT ;;
-            *"hotfix"*)  echo "prefix=hotfix" >> $GITHUB_OUTPUT ;;
-            *)           echo "prefix=task" >> $GITHUB_OUTPUT ;;
+          LABELS=$(echo "${{ join(github.event.issue.labels.*.name, ',') }}" | tr '[:upper:]' '[:lower:]')
+          case "${LABELS}" in
+            *feat*)     echo "prefix=feature" >> $GITHUB_OUTPUT ;;
+            *hotfix*)   echo "prefix=hotfix" >> $GITHUB_OUTPUT ;;
+            *refactor*) echo "prefix=refactor" >> $GITHUB_OUTPUT ;;
+            *bug*)      echo "prefix=bugfix" >> $GITHUB_OUTPUT ;;
+            *)          echo "prefix=task" >> $GITHUB_OUTPUT ;;
           esac
 
       - name: Sanitize branch name
@@ -49,4 +57,4 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          branch: ${{ steps.set_prefix.outputs.prefix }}/#${{ github.event.issue.number }}/${{ steps.sanitize.outputs.name }}
+          branch: ${{ steps.set_prefix.outputs.prefix }}/#${{ github.event.issue.number }}-${{ steps.sanitize.outputs.name }}
