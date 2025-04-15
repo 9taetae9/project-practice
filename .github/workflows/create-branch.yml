@@ -6,7 +6,6 @@ on:
 
 permissions:
   contents: write
-  pull-requests: write
 
 jobs:
   create-feature-branch:
@@ -15,18 +14,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Validate labels
-        id: check_labels
-        run: |
-          if [ -z "${{ github.event.issue.labels.*.name }}" ]; then
-            echo "error=No labels assigned" >> $GITHUB_OUTPUT
-            exit 1
-          fi
-
       - name: Set branch prefix
         id: set_prefix
         run: |
-          case "${{ github.event.issue.labels.*.name }}" in
+          case "${{ join(github.event.issue.labels.*.name, ',') }}" in
             *"feat"*)   echo "prefix=feature" >> $GITHUB_OUTPUT ;;
             *"bug"*)    echo "prefix=bugfix" >> $GITHUB_OUTPUT ;;
             *"hotfix"*) echo "prefix=hotfix" >> $GITHUB_OUTPUT ;;
@@ -37,22 +28,16 @@ jobs:
       - name: Sanitize branch name
         id: sanitize
         run: |
-          CLEAN_TITLE=$(echo "${{ github.event.issue.title }}" | iconv -f utf-8 -t ascii//TRANSLIT | tr -cd '[:alnum:]-_' | cut -c 1-63)
-          echo "name=$CLEAN_TITLE" >> $GITHUB_OUTPUT
+          CLEAN_TITLE=$(echo "${{ github.event.issue.title }}" | 
+            iconv -f utf-8 -t ascii//TRANSLIT//IGNORE |
+            tr -cd '[:alnum:]-_' |
+            tr '[:upper:]' '[:lower:]' |
+            cut -c 1-63)
+          echo "name=${CLEAN_TITLE}" >> $GITHUB_OUTPUT
 
       - name: Create branch
-        uses: peterjgrainger/action-create-branch@v2.2.0
+        uses: peterjgrainger/action-create-branch@v3.0.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
           branch: ${{ steps.set_prefix.outputs.prefix }}/#${{ github.event.issue.number }}-${{ steps.sanitize.outputs.name }}
-
-      - name: Link branch to issue
-        uses: actions/github-script@v6
-        with:
-          script: |
-            await github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: ${{ github.event.issue.number }},
-              body: `자동 생성 브랜치: \`${{ steps.set_prefix.outputs.prefix }}/#${{ github.event.issue.number }}-${{ steps.sanitize.outputs.name }}\``
-            })
