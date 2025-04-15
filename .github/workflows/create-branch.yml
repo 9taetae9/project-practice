@@ -36,10 +36,12 @@ jobs:
         run: |
           LABELS=$(echo "${{ join(github.event.issue.labels.*.name, ',') }}" | tr '[:upper:]' '[:lower:]')
           case "${LABELS}" in
-            *feat*)     echo "prefix=feature" >> $GITHUB_OUTPUT ;;
+            *feat*)     echo "prefix=feat" >> $GITHUB_OUTPUT ;;
             *hotfix*)   echo "prefix=hotfix" >> $GITHUB_OUTPUT ;;
-            *refactor*) echo "prefix=refactor" >> $GITHUB_OUTPUT ;;
-            *bug*)      echo "prefix=bugfix" >> $GITHUB_OUTPUT ;;
+            *refactor*) 
+            echo "prefix=feat" >> $GITHUB_OUTPUT 
+            echo "suffix=-refactor" >> $GITHUB_OUTPUT
+            ;;
             *)          echo "prefix=task" >> $GITHUB_OUTPUT ;;
           esac
 
