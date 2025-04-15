@@ -1,0 +1,28 @@
+name: Auto Create Branch
+
+on:
+  issues:
+    types: [opened]
+
+jobs:
+  create-feature-branch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set branch prefix
+        id: set_prefix
+        run: |
+          case "${{ github.event.issue.labels.*.name }}" in
+            *"feat"*) echo "prefix=feature" >> $GITHUB_OUTPUT ;;
+            *"bug"*) echo "prefix=hotfix" >> $GITHUB_OUTPUT ;;
+            *"refactor"*) echo "prefix=refactor" >> $GITHUB_OUTPUT ;;
+            *) echo "prefix=task" >> $GITHUB_OUTPUT ;;
+          esac
+
+      - name: Create branch
+        uses: peterjgrainger/action-create-branch@v2.1.1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ steps.set_prefix.outputs.prefix }}/#${{ github.event.issue.number }}-$(echo '${{ github.event.issue.title }}' | tr ' ' '-' | tr '[:upper:]' '[:lower:]')
