@@ -53,6 +53,8 @@ jobs:
             tr -cd '[:alnum:]-_' |
             tr '[:upper:]' '[:lower:]' |
             cut -c 1-20)
+          FINAL_NAME="${CLEAN_KEYWORD}${{ steps.set_metadata.outputs.suffix }}"
+          echo "::set-output name=final_name::$FINAL_NAME"
           echo "name=$CLEAN_KEYWORD" >> $GITHUB_OUTPUT
 
       - name: Create branch
