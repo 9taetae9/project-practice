@@ -1,7 +1,7 @@
 name: 리펙토링
 description: 코드 및 성능 개선
 title: "[Refactor]: "
-labels: ["feat"]
+labels: ["refactor"]
 body:
   - type: input
     id: branch_keyword
